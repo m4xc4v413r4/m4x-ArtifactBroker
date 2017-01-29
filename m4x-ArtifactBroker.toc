@@ -1,0 +1,13 @@
+## Interface: 70100
+## Title: m4x ArtifactBroker
+## Notes: Artifact Power Broker
+## Author: m4xc4v413r4
+## Version: v1.0
+## OptionalDeps: LibDataBroker-1.1
+
+#@no-lib-strip@
+Libs\LibStub\LibStub.lua
+#@end-no-lib-strip@
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+
+m4x-ArtifactBroker.lua
