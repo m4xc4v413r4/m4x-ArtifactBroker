@@ -2,7 +2,7 @@
 ## Title: m4x ArtifactBroker
 ## Notes: Artifact Power Broker
 ## Author: m4xc4v413r4
-## Version: v1.0
+## Version: @project-version@
 ## OptionalDeps: LibDataBroker-1.1
 
 #@no-lib-strip@
