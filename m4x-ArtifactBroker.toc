@@ -3,7 +3,7 @@
 ## Notes: Artifact Power Broker
 ## Author: m4xc4v413r4
 ## Version: @project-version@
-## OptionalDeps: LibDataBroker-1.1
+## SavedVariables: m4xArtifactBrokerDB
 
 #@no-lib-strip@
 Libs\LibStub\LibStub.lua
