@@ -39,8 +39,8 @@ local function UpdateValues()
 		elseif m4xArtifactBrokerDB["view"] == "partial" then
 			dataobj.text = string.format("|cff00ff00%.1f%%|r" .. (pointsFree > 0 and " (+%d)" or ""), 100 * totalXP / xpToNextPoint, pointsFree);
 		end
+		return totalXP, xpToNextPoint, pointsFree;
 	end
-	return itemID, totalXP, xpToNextPoint, pointsFree;
 end
 
 frame:SetScript("OnEvent", function(self, event, ...)
@@ -126,7 +126,7 @@ dataobj.OnClick = function(self, button)
 			SocketInventoryItem(16);
 		end
 	elseif button == "RightButton" then
-		itemID = UpdateValues(itemID);
+		itemID = C_ArtifactUI.GetEquippedArtifactInfo();
 		if itemID then
 			ToggleDropDownMenu(1, nil, dropdown, self:GetName(), 0, 0);
 		end

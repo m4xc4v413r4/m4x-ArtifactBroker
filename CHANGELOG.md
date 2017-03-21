@@ -1,3 +1,7 @@
+## v1.1.1 - 2017-03-21
+### Fixed
+- Bug with the numbers displayed in the dropdown "View" list
+
 ## v1.1 - 2017-03-11
 ### Changed
 - Almost complete rewrite of the addon
