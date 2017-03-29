@@ -1,4 +1,4 @@
-## Interface: 70100
+## Interface: 70200
 ## Title: m4x ArtifactBroker
 ## Notes: Artifact Power Broker
 ## Author: m4xc4v413r4

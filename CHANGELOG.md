@@ -1,3 +1,10 @@
+## v1.1.2 - 2017-03-29
+### Changed
+- Some code to address API changes
+- TOC version for 7.2
+### Added
+- Artifact Knowledge level % up to level 50 (from 25)
+
 ## v1.1.1 - 2017-03-21
 ### Fixed
 - Bug with the numbers displayed in the dropdown "View" list

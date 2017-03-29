@@ -6,7 +6,12 @@ local akMulti = {
 	275, 375, 500, 650, 850,
 	1100, 1400, 1775, 2250, 2850,
 	3600, 4550, 5700, 7200, 9000,
-	11300, 14200, 17800, 22300, 24900
+	11300, 14200, 17800, 22300, 24900,
+	100000, 130000, 170000, 220000, 290000,
+	380000, 490000, 640000, 830000, 1080000,
+	1400000, 1820000, 2370000, 3080000, 4000000,
+	5200000, 6760000, 8790000, 11430000, 14860000,
+	19320000, 25120000, 32660000, 42460000, 55200000
 };
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
@@ -28,11 +33,11 @@ frame:RegisterEvent("ARTIFACT_RESPEC_PROMPT");
 frame:RegisterEvent("ARTIFACT_XP_UPDATE");
 
 local function UpdateValues()
-	local itemID, _, _, _, totalXP, pointsSpent = C_ArtifactUI.GetEquippedArtifactInfo();
+	local itemID, _, _, _, totalXP, pointsSpent, _, _, _, _, _, _, artifactTier = C_ArtifactUI.GetEquippedArtifactInfo();
 	if itemID then
-		local pointsFree, xpToNextPoint = 0, C_ArtifactUI.GetCostForPointAtRank(pointsSpent);
+		local pointsFree, xpToNextPoint = 0, C_ArtifactUI.GetCostForPointAtRank(pointsSpent, artifactTier);
 		while totalXP >= xpToNextPoint do
-			totalXP, pointsSpent, pointsFree, xpToNextPoint = totalXP - xpToNextPoint, pointsSpent + 1, pointsFree + 1, C_ArtifactUI.GetCostForPointAtRank(pointsSpent + 1);
+			totalXP, pointsSpent, pointsFree, xpToNextPoint = totalXP - xpToNextPoint, pointsSpent + 1, pointsFree + 1, C_ArtifactUI.GetCostForPointAtRank(pointsSpent + 1, artifactTier);
 		end
 		if m4xArtifactBrokerDB["view"] == "full" then
 			dataobj.text = string.format("|cff00ff00%d/%d (%.1f%%)|r" .. (pointsFree > 0 and " (+%d)" or ""), totalXP, xpToNextPoint, 100 * totalXP / xpToNextPoint, pointsFree);
@@ -62,12 +67,12 @@ dataobj.OnTooltipShow = function(tooltip)
 		tooltip:AddLine(" ");
 		tooltip:AddLine(string.format("Artifact Knowledge Level: |cff00ff00%d (+%d%%)|r", akLevel, akMulti[akLevel] or 0));
 
-		if akLevel < 25 then
+		if akLevel < 50 then
 			tooltip:AddLine(string.format("Next Artifact Knowledge: |cff00ff00%d (+%d%%)|r", akLevel + 1, akMulti[akLevel + 1]));
 		end
 
 		tooltip:AddLine(" ");
-		tooltip:AddLine(string.format("Stamina from points: |cff00ff00+%g%% (+%d)|r", pointsSpent > 34 and 34 * 0.75 or pointsSpent * 0.75, effectiveStat - (effectiveStat / ((pointsSpent > 34 and 34 * 0.75 / 100 or pointsSpent * 0.75 / 100) + 1))));
+		tooltip:AddLine(string.format("Stamina from points: |cff00ff00+%g%% (+%d)|r", pointsSpent * 0.75, effectiveStat - (effectiveStat / ((pointsSpent * 0.75 / 100) + 1))));
 	else
 		tooltip:SetText("No Artifact Weapon Equipped");
 	end
