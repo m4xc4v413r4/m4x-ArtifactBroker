@@ -1,3 +1,7 @@
+## v1.1.3 - 2017-04-02
+### Added
+- Number separators to make them easier to read when they're big
+
 ## v1.1.2 - 2017-03-29
 ### Changed
 - Some code to address API changes

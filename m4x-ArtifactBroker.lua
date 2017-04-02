@@ -40,7 +40,7 @@ local function UpdateValues()
 			totalXP, pointsSpent, pointsFree, xpToNextPoint = totalXP - xpToNextPoint, pointsSpent + 1, pointsFree + 1, C_ArtifactUI.GetCostForPointAtRank(pointsSpent + 1, artifactTier);
 		end
 		if m4xArtifactBrokerDB["view"] == "full" then
-			dataobj.text = string.format("|cff00ff00%d/%d (%.1f%%)|r" .. (pointsFree > 0 and " (+%d)" or ""), totalXP, xpToNextPoint, 100 * totalXP / xpToNextPoint, pointsFree);
+			dataobj.text = string.format("|cff00ff00%s/%s (%.1f%%)|r" .. (pointsFree > 0 and " (+%d)" or ""), BreakUpLargeNumbers(totalXP), BreakUpLargeNumbers(xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree);
 		elseif m4xArtifactBrokerDB["view"] == "partial" then
 			dataobj.text = string.format("|cff00ff00%.1f%%|r" .. (pointsFree > 0 and " (+%d)" or ""), 100 * totalXP / xpToNextPoint, pointsFree);
 		end
@@ -65,10 +65,10 @@ dataobj.OnTooltipShow = function(tooltip)
 	if HasArtifactEquipped() then
 		tooltip:SetText(string.format("|T%d:0|t %s", itemIcon, itemName));
 		tooltip:AddLine(" ");
-		tooltip:AddLine(string.format("Artifact Knowledge Level: |cff00ff00%d (+%d%%)|r", akLevel, akMulti[akLevel] or 0));
+		tooltip:AddLine(string.format("Artifact Knowledge Level: |cff00ff00%d (+%s%%)|r", akLevel, BreakUpLargeNumbers(akMulti[akLevel]) or 0));
 
 		if akLevel < 50 then
-			tooltip:AddLine(string.format("Next Artifact Knowledge: |cff00ff00%d (+%d%%)|r", akLevel + 1, akMulti[akLevel + 1]));
+			tooltip:AddLine(string.format("Next Artifact Knowledge: |cff00ff00%d (+%s%%)|r", akLevel + 1, BreakUpLargeNumbers(akMulti[akLevel + 1])));
 		end
 
 		tooltip:AddLine(" ");
@@ -112,11 +112,11 @@ dropdown.initialize = function(self, dropLevel)
 		dropData.keepShownOnClick = 1;
 		dropData.notCheckable = 1;
 
-		dropData.text = string.format("|cff00ff00%d/%d (%.1f%%)|r" .. (pointsFree > 0 and " (+%d)" or ""), totalXP, xpToNextPoint, 100 * totalXP / xpToNextPoint, pointsFree);
+		dropData.text = string.format("|cff00ff00%s/%s (%.1f%%)|r", BreakUpLargeNumbers(totalXP), BreakUpLargeNumbers(xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree);
 		dropData.func = function() m4xArtifactBrokerDB["view"] = "full"; UpdateValues(); end
 		UIDropDownMenu_AddButton(dropData, dropLevel);
 
-		dropData.text = string.format("|cff00ff00%.1f%%|r" .. (pointsFree > 0 and " (+%d)" or ""), 100 * totalXP / xpToNextPoint, pointsFree);
+		dropData.text = string.format("|cff00ff00%.1f%%|r", 100 * totalXP / xpToNextPoint, pointsFree);
 		dropData.func = function() m4xArtifactBrokerDB["view"] = "partial"; UpdateValues(); end
 		UIDropDownMenu_AddButton(dropData, dropLevel);
 	end
