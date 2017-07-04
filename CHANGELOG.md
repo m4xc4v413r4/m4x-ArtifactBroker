@@ -1,3 +1,9 @@
+## v1.1.4 - 2017-07-04
+### Fixed
+- Bug with tooltip when your AK level was 0
+### Changed
+- Artifact Knowledge level % down to level 40 (from 50)
+
 ## v1.1.3 - 2017-04-02
 ### Added
 - Number separators to make them easier to read when they're big
@@ -6,7 +12,6 @@
 ### Changed
 - Some code to address API changes
 - TOC version for 7.2
-### Added
 - Artifact Knowledge level % up to level 50 (from 25)
 
 ## v1.1.1 - 2017-03-21

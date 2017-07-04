@@ -1,5 +1,5 @@
-local dropData = {};
-m4xArtifactBrokerDB = m4xArtifactBrokerDB or {};
+local dropData = {}
+m4xArtifactBrokerDB = m4xArtifactBrokerDB or {}
 
 local akMulti = {
 	25, 50, 90, 140, 200,
@@ -9,131 +9,130 @@ local akMulti = {
 	11300, 14200, 17800, 22300, 24900,
 	100000, 130000, 170000, 220000, 290000,
 	380000, 490000, 640000, 830000, 1080000,
-	1400000, 1820000, 2370000, 3080000, 4000000,
-	5200000, 6760000, 8790000, 11430000, 14860000,
-	19320000, 25120000, 32660000, 42460000, 55200000
-};
+	1400000, 1820000, 2370000, 3080000, 4000000
+}
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 local dataobj = ldb:NewDataObject("m4xArtifactBroker", {
 	type = "data source",
 	icon = "Interface\\Icons\\archaeology_5_0_mogucoin",
 	label = "AP"
-});
+})
 
 local frame = CreateFrame("Frame")
-local dropdown = CreateFrame("Button");
+local dropdown = CreateFrame("Button")
 
-dropdown.displayMode = "MENU";
+dropdown.displayMode = "MENU"
 
-frame:RegisterEvent("PLAYER_ENTERING_WORLD");
-frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED");
-frame:RegisterEvent("ARTIFACT_CLOSE");
-frame:RegisterEvent("ARTIFACT_RESPEC_PROMPT");
-frame:RegisterEvent("ARTIFACT_XP_UPDATE");
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+frame:RegisterEvent("ARTIFACT_UPDATE")
+frame:RegisterEvent("ARTIFACT_CLOSE")
+frame:RegisterEvent("ARTIFACT_RESPEC_PROMPT")
+frame:RegisterEvent("ARTIFACT_XP_UPDATE")
 
 local function UpdateValues()
-	local itemID, _, _, _, totalXP, pointsSpent, _, _, _, _, _, _, artifactTier = C_ArtifactUI.GetEquippedArtifactInfo();
+	local itemID, _, _, _, totalXP, pointsSpent, _, _, _, _, _, _, artifactTier = C_ArtifactUI.GetEquippedArtifactInfo()
 	if itemID then
-		local pointsFree, xpToNextPoint = 0, C_ArtifactUI.GetCostForPointAtRank(pointsSpent, artifactTier);
+		local pointsFree, xpToNextPoint = 0, C_ArtifactUI.GetCostForPointAtRank(pointsSpent, artifactTier)
 		while totalXP >= xpToNextPoint do
-			totalXP, pointsSpent, pointsFree, xpToNextPoint = totalXP - xpToNextPoint, pointsSpent + 1, pointsFree + 1, C_ArtifactUI.GetCostForPointAtRank(pointsSpent + 1, artifactTier);
+			totalXP, pointsSpent, pointsFree, xpToNextPoint = totalXP - xpToNextPoint, pointsSpent + 1, pointsFree + 1, C_ArtifactUI.GetCostForPointAtRank(pointsSpent + 1, artifactTier)
 		end
 		if m4xArtifactBrokerDB["view"] == "full" then
-			dataobj.text = string.format("|cff00ff00%s/%s (%.1f%%)|r" .. (pointsFree > 0 and " (+%d)" or ""), BreakUpLargeNumbers(totalXP), BreakUpLargeNumbers(xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree);
+			dataobj.text = string.format("|cff00ff00%s/%s (%.1f%%)|r" .. (pointsFree > 0 and " (+%d)" or ""), BreakUpLargeNumbers(totalXP), BreakUpLargeNumbers(xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree)
 		elseif m4xArtifactBrokerDB["view"] == "partial" then
-			dataobj.text = string.format("|cff00ff00%.1f%%|r" .. (pointsFree > 0 and " (+%d)" or ""), 100 * totalXP / xpToNextPoint, pointsFree);
+			dataobj.text = string.format("|cff00ff00%.1f%%|r" .. (pointsFree > 0 and " (+%d)" or ""), 100 * totalXP / xpToNextPoint, pointsFree)
 		end
-		return totalXP, xpToNextPoint, pointsFree;
+		return totalXP, xpToNextPoint, pointsFree
 	end
 end
 
 frame:SetScript("OnEvent", function(self, event, ...)
 	if event == "PLAYER_ENTERING_WORLD" then
 		if not m4xArtifactBrokerDB["view"] then
-			m4xArtifactBrokerDB["view"] = "partial";
+			m4xArtifactBrokerDB["view"] = "partial"
 		end
 	end
-	UpdateValues();
-end);
+	UpdateValues()
+end)
 
 dataobj.OnTooltipShow = function(tooltip)
-	local _, akLevel = GetCurrencyInfo(1171);
-	local _, _, itemName, itemIcon, _, pointsSpent = C_ArtifactUI.GetEquippedArtifactInfo();
-	local _, effectiveStat = UnitStat("player", 3);
+	local _, akLevel = GetCurrencyInfo(1171)
+	local _, _, itemName, itemIcon, _, pointsSpent = C_ArtifactUI.GetEquippedArtifactInfo()
+	local _, effectiveStat = UnitStat("player", 3)
 
 	if HasArtifactEquipped() then
-		tooltip:SetText(string.format("|T%d:0|t %s", itemIcon, itemName));
-		tooltip:AddLine(" ");
-		tooltip:AddLine(string.format("Artifact Knowledge Level: |cff00ff00%d (+%s%%)|r", akLevel, BreakUpLargeNumbers(akMulti[akLevel]) or 0));
+		tooltip:SetText(string.format("|T%d:0|t %s", itemIcon, itemName))
+		tooltip:AddLine(" ")
+		tooltip:AddLine(string.format("Artifact Knowledge Level: |cff00ff00%d (+%s%%)|r", akLevel, BreakUpLargeNumbers(akMulti[akLevel] or 0)))
 
-		if akLevel < 50 then
-			tooltip:AddLine(string.format("Next Artifact Knowledge: |cff00ff00%d (+%s%%)|r", akLevel + 1, BreakUpLargeNumbers(akMulti[akLevel + 1])));
+		if akLevel < 40 then
+			tooltip:AddLine(string.format("Next Artifact Knowledge: |cff00ff00%d (+%s%%)|r", akLevel + 1, BreakUpLargeNumbers(akMulti[akLevel + 1])))
 		end
 
-		tooltip:AddLine(" ");
-		tooltip:AddLine(string.format("Stamina from points: |cff00ff00+%g%% (+%d)|r", pointsSpent * 0.75, effectiveStat - (effectiveStat / ((pointsSpent * 0.75 / 100) + 1))));
+		tooltip:AddLine(" ")
+		tooltip:AddLine(string.format("Stamina from points: |cff00ff00+%g%% (+%d)|r", pointsSpent * 0.75, effectiveStat - (effectiveStat / ((pointsSpent * 0.75 / 100) + 1))))
 	else
-		tooltip:SetText("No Artifact Weapon Equipped");
+		tooltip:SetText("No Artifact Weapon Equipped")
 	end
 end
 
 dropdown.initialize = function(self, dropLevel)
 	if not dropLevel then return end
-	wipe(dropData);
+	wipe(dropData)
 
 	if dropLevel == 1 then
-		dropData.isTitle = 1;
-		dropData.notCheckable = 1;
+		dropData.isTitle = 1
+		dropData.notCheckable = 1
 
-		dropData.text = "m4x ArtifactBroker";
-		UIDropDownMenu_AddButton(dropData, dropLevel);
+		dropData.text = "m4x ArtifactBroker"
+		UIDropDownMenu_AddButton(dropData, dropLevel)
 
-		dropData.isTitle = nil;
-		dropData.disabled = nil;
-		dropData.keepShownOnClick = 1;
-		dropData.hasArrow = 1;
-		dropData.notCheckable = 1;
+		dropData.isTitle = nil
+		dropData.disabled = nil
+		dropData.keepShownOnClick = 1
+		dropData.hasArrow = 1
+		dropData.notCheckable = 1
 
-		dropData.text = "View";
-		UIDropDownMenu_AddButton(dropData, dropLevel);
+		dropData.text = "View"
+		UIDropDownMenu_AddButton(dropData, dropLevel)
 
-		dropData.value = nil;
-		dropData.hasArrow = nil;
-		dropData.keepShownOnClick = nil;
+		dropData.value = nil
+		dropData.hasArrow = nil
+		dropData.keepShownOnClick = nil
 
-		dropData.text = CLOSE;
-		dropData.func = function() CloseDropDownMenus(); end
-		dropData.checked = nil;
-		UIDropDownMenu_AddButton(dropData, dropLevel);
+		dropData.text = CLOSE
+		dropData.func = function() CloseDropDownMenus() end
+		dropData.checked = nil
+		UIDropDownMenu_AddButton(dropData, dropLevel)
 
 	elseif dropLevel == 2 then
-		totalXP, xpToNextPoint, pointsFree = UpdateValues(totalXP, xpToNextPoint, pointsFree);
-		dropData.keepShownOnClick = 1;
-		dropData.notCheckable = 1;
+		totalXP, xpToNextPoint, pointsFree = UpdateValues(totalXP, xpToNextPoint, pointsFree)
+		dropData.keepShownOnClick = 1
+		dropData.notCheckable = 1
 
-		dropData.text = string.format("|cff00ff00%s/%s (%.1f%%)|r", BreakUpLargeNumbers(totalXP), BreakUpLargeNumbers(xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree);
-		dropData.func = function() m4xArtifactBrokerDB["view"] = "full"; UpdateValues(); end
-		UIDropDownMenu_AddButton(dropData, dropLevel);
+		dropData.text = string.format("|cff00ff00%s/%s (%.1f%%)|r", BreakUpLargeNumbers(totalXP), BreakUpLargeNumbers(xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree)
+		dropData.func = function() m4xArtifactBrokerDB["view"] = "full" UpdateValues() end
+		UIDropDownMenu_AddButton(dropData, dropLevel)
 
-		dropData.text = string.format("|cff00ff00%.1f%%|r", 100 * totalXP / xpToNextPoint, pointsFree);
-		dropData.func = function() m4xArtifactBrokerDB["view"] = "partial"; UpdateValues(); end
-		UIDropDownMenu_AddButton(dropData, dropLevel);
+		dropData.text = string.format("|cff00ff00%.1f%%|r", 100 * totalXP / xpToNextPoint, pointsFree)
+		dropData.func = function() m4xArtifactBrokerDB["view"] = "partial" UpdateValues() end
+		UIDropDownMenu_AddButton(dropData, dropLevel)
 	end
 end
 
 dataobj.OnClick = function(self, button)
 	if button == "LeftButton" then
-		ArtifactFrame_LoadUI();
+		ArtifactFrame_LoadUI()
 		if ( ArtifactFrame:IsVisible() ) then
-			HideUIPanel(ArtifactFrame);
+			HideUIPanel(ArtifactFrame)
 		else
-			SocketInventoryItem(16);
+			SocketInventoryItem(16)
 		end
 	elseif button == "RightButton" then
-		itemID = C_ArtifactUI.GetEquippedArtifactInfo();
+		itemID = C_ArtifactUI.GetEquippedArtifactInfo()
 		if itemID then
-			ToggleDropDownMenu(1, nil, dropdown, self:GetName(), 0, 0);
+			ToggleDropDownMenu(1, nil, dropdown, self:GetName(), 0, 0)
 		end
 	end
 end
