@@ -1,17 +1,6 @@
 local dropData = {}
 m4xArtifactBrokerDB = m4xArtifactBrokerDB or {}
 
-local akMulti = {
-	25, 50, 90, 140, 200,
-	275, 375, 500, 650, 850,
-	1100, 1400, 1775, 2250, 2850,
-	3600, 4550, 5700, 7200, 9000,
-	11300, 14200, 17800, 22300, 24900,
-	100000, 130000, 170000, 220000, 290000,
-	380000, 490000, 640000, 830000, 1080000,
-	1400000, 1820000, 2370000, 3080000, 4000000
-}
-
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 local dataobj = ldb:NewDataObject("m4xArtifactBroker", {
 	type = "data source",
@@ -31,17 +20,46 @@ frame:RegisterEvent("ARTIFACT_CLOSE")
 frame:RegisterEvent("ARTIFACT_RESPEC_PROMPT")
 frame:RegisterEvent("ARTIFACT_XP_UPDATE")
 
+local function FormatText(arg)
+	local formatedText = "|cff00ff00%.2f|r|cffff7f00%s|r"
+	if arg >= 1000000000 then
+		arg = string.format(formatedText, arg / 1000000000, "B")
+	elseif arg >= 1000000 then
+		arg = string.format(formatedText, arg / 1000000, "M")
+	elseif arg >= 1000 then
+		arg = string.format(formatedText, arg / 1000, "K")
+	end
+	return arg
+end
+
+local function ColorText(arg)
+	local cR, cG
+	if arg > 0.5 then
+		cR = 255 * (1 - arg) * 2
+		cG = 255
+	elseif arg <= 0.5 then
+		cR = 255
+		cG = 255 * arg * 2
+	end
+	arg = string.format("|cff%02x%02x00", cR, cG)
+	return arg
+end
+
+
 local function UpdateValues()
-	local itemID, _, _, _, totalXP, pointsSpent, _, _, _, _, _, _, artifactTier = C_ArtifactUI.GetEquippedArtifactInfo()
+	local itemID, _, _, itemIcon, totalXP, pointsSpent, _, _, _, _, _, _, artifactTier = C_ArtifactUI.GetEquippedArtifactInfo()
 	if itemID then
+		dataobj.icon = itemIcon
 		local pointsFree, xpToNextPoint = 0, C_ArtifactUI.GetCostForPointAtRank(pointsSpent, artifactTier)
-		while totalXP >= xpToNextPoint do
+		while totalXP >= xpToNextPoint and xpToNextPoint > 0 do
 			totalXP, pointsSpent, pointsFree, xpToNextPoint = totalXP - xpToNextPoint, pointsSpent + 1, pointsFree + 1, C_ArtifactUI.GetCostForPointAtRank(pointsSpent + 1, artifactTier)
 		end
-		if m4xArtifactBrokerDB["view"] == "full" then
-			dataobj.text = string.format("|cff00ff00%s/%s (%.1f%%)|r" .. (pointsFree > 0 and " (+%d)" or ""), BreakUpLargeNumbers(totalXP), BreakUpLargeNumbers(xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree)
+		if xpToNextPoint < 1 then
+			dataobj.text = string.format("Use %d ranks to calculate", pointsFree - 88)
+		elseif m4xArtifactBrokerDB["view"] == "full" then
+			dataobj.text = string.format("%s/%s (%s%.1f%%|r)" .. (pointsFree > 0 and " (+%d)" or ""), FormatText(totalXP), FormatText(xpToNextPoint), ColorText(totalXP / xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree)
 		elseif m4xArtifactBrokerDB["view"] == "partial" then
-			dataobj.text = string.format("|cff00ff00%.1f%%|r" .. (pointsFree > 0 and " (+%d)" or ""), 100 * totalXP / xpToNextPoint, pointsFree)
+			dataobj.text = string.format("%s%.1f%%|r" .. (pointsFree > 0 and " (+%d)" or ""),ColorText(totalXP / xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree)
 		end
 		return totalXP, xpToNextPoint, pointsFree
 	end
@@ -57,21 +75,16 @@ frame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 dataobj.OnTooltipShow = function(tooltip)
-	local _, akLevel = GetCurrencyInfo(1171)
 	local _, _, itemName, itemIcon, _, pointsSpent = C_ArtifactUI.GetEquippedArtifactInfo()
-	local _, effectiveStat = UnitStat("player", 3)
+	local totalXP, xpToNextPoint = UpdateValues()
 
 	if HasArtifactEquipped() then
 		tooltip:SetText(string.format("|T%d:0|t %s", itemIcon, itemName))
 		tooltip:AddLine(" ")
-		tooltip:AddLine(string.format("Artifact Knowledge Level: |cff00ff00%d (+%s%%)|r", akLevel, BreakUpLargeNumbers(akMulti[akLevel] or 0)))
-
-		if akLevel < 40 then
-			tooltip:AddLine(string.format("Next Artifact Knowledge: |cff00ff00%d (+%s%%)|r", akLevel + 1, BreakUpLargeNumbers(akMulti[akLevel + 1])))
+		tooltip:AddDoubleLine("Artifact Weapon Rank:", string.format("|cff00ff00%d|r", pointsSpent))
+		if xpToNextPoint > 0 then
+			tooltip:AddDoubleLine("AP left for next Rank:", string.format("%s", FormatText(xpToNextPoint - totalXP)))
 		end
-
-		tooltip:AddLine(" ")
-		tooltip:AddLine(string.format("Stamina from points: |cff00ff00+%g%% (+%d)|r", pointsSpent * 0.75, effectiveStat - (effectiveStat / ((pointsSpent * 0.75 / 100) + 1))))
 	else
 		tooltip:SetText("No Artifact Weapon Equipped")
 	end
@@ -107,17 +120,19 @@ dropdown.initialize = function(self, dropLevel)
 		UIDropDownMenu_AddButton(dropData, dropLevel)
 
 	elseif dropLevel == 2 then
-		totalXP, xpToNextPoint, pointsFree = UpdateValues(totalXP, xpToNextPoint, pointsFree)
+		local totalXP, xpToNextPoint, pointsFree = UpdateValues()
 		dropData.keepShownOnClick = 1
 		dropData.notCheckable = 1
 
-		dropData.text = string.format("|cff00ff00%s/%s (%.1f%%)|r", BreakUpLargeNumbers(totalXP), BreakUpLargeNumbers(xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree)
-		dropData.func = function() m4xArtifactBrokerDB["view"] = "full" UpdateValues() end
-		UIDropDownMenu_AddButton(dropData, dropLevel)
+		if xpToNextPoint > 0 then
+			dropData.text = string.format("%s/%s (%s%.1f%%|r)", FormatText(totalXP), FormatText(xpToNextPoint), ColorText(totalXP / xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree)
+			dropData.func = function() m4xArtifactBrokerDB["view"] = "full" UpdateValues() end
+			UIDropDownMenu_AddButton(dropData, dropLevel)
 
-		dropData.text = string.format("|cff00ff00%.1f%%|r", 100 * totalXP / xpToNextPoint, pointsFree)
-		dropData.func = function() m4xArtifactBrokerDB["view"] = "partial" UpdateValues() end
-		UIDropDownMenu_AddButton(dropData, dropLevel)
+			dropData.text = string.format("%s%.1f%%|r", ColorText(totalXP / xpToNextPoint), 100 * totalXP / xpToNextPoint, pointsFree)
+			dropData.func = function() m4xArtifactBrokerDB["view"] = "partial" UpdateValues() end
+			UIDropDownMenu_AddButton(dropData, dropLevel)
+		end
 	end
 end
 
